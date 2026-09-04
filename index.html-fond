@@ -1,0 +1,986 @@
+<html>
+<head>
+<title></title>
+<style>
+body{background-image:url("img/fond_ecran.png");}
+color:white;font-size:20px;text-align:center;margin:0;}
+.msgs{background-color:#062778;height:40px;border:2px solid #839ACA;font-size:28px;margin:0;padding:5px 0 5px 0;}
+.bottopmsg{display:block;position:absolute;bottom:0px;height:43px;width:1530px;font-size:26px;padding:5px 0 1px 0;}
+button{width:410px;margin:5px 3px 5px 3px;padding:0px;border:2px solid #839ACA;text-align:left;color:white;outline:none;background:linear-gradient(180deg,rgba(74,91,134,1)0%,rgba(14,34,87,1)35%);}
+button:hover{cursor:pointer;background:linear-gradient(180deg,rgba(74,91,134,1)0%,rgba(4,9,23,1)35%);}
+.butIMG{display:inline-block;margin:-0px;border-right:3px solid #839ACA;outline:none;cursor:pointer;}
+.butIMG img{width:70px;height:70px;padding:5px 5px 2px 5px;cursor:pointer;}
+.butTXT{float:right;text-align:center;width:299px;font-size:28px;margin:22px 0 0 0;cursor:pointer;}
+.multiTXT{width:284px;height:80px;line-height:80px;text-align:center;font-size:28px;margin:0;outline:none;float:right;cursor:pointer;}
+.multiBUTTON{background:transparent;width:35px;height:78px;border:1px solid DimGray;line-height:78px;text-align:center;font-size:12px;color:white;margin:0;outline:none;float:right;}
+.multiBUTTON:hover{background:transparent;color:red;}
+.multiOPTIONS{width:1px;height:1px;background:transparent;color:white;outline:none;border:0;font-size:28px;display:hidden;}
+</style><script>
+
+//Check Cache Status
+if (window.applicationCache.status=='0')
+{
+  window.location.replace("cache.html");
+}
+//Initialization of variables
+var payloadData = "";
+var array = "";
+var PLfile = "";
+localStorage.setItem("ipaddress","127.0.0.1");
+
+//Functions
+function pldone() 
+{
+  msgs.innerHTML= LoadedMSG;
+}
+
+//Function to 'Load' the payload file to be send to GoldHEN Bin Server.	
+	var getPayload=function(payload,onLoadEndCallback)
+    {
+		var req=new XMLHttpRequest();
+		req.open('GET',payload);
+		req.send();
+		req.responseType="arraybuffer";
+		req.onload=function(event){
+			if(onLoadEndCallback)onLoadEndCallback(req,event);
+		};
+	};
+	
+//Function to 'Send' the payload file to GoldHEN Bin Server using Html POST method. 
+	var sendPayload=function(url,data,onLoadEndCallback)
+    {
+		var req=new XMLHttpRequest();
+		req.open("POST",url,true);
+		req.send(data);
+		req.onload=function(event){
+			if(onLoadEndCallback)onLoadEndCallback(req,event);
+		};
+	};
+
+//function to check current status of the GoldHEN Bin Server
+function checkbinserverstatus()
+{
+    var req = new XMLHttpRequest(); 
+	req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
+	req.send();
+	req.onerror = function(){
+		msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>GoldHEN Bin Server Not Detected!!!</h1>";
+		sessionStorage.isbinserver = "no";
+	};
+	req.onload = function(){
+	var responseJson = JSON.parse(req.responseText);
+	if (responseJson.status=="ready"){
+		msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>GoldHEN Bin Server Detected, Payloads Will run over HTTP-POST!!!</h1>";
+		sessionStorage.isbinserver = "yes";
+		}
+	};
+}
+
+//Payloads to be loaded over GoldHEN Bin Server method in BZ2 format
+function LoadpayloadGoldHENBz2(PLfile)
+{ //Loading Payload via Payload Param.
+	   // First do an initial check to see if the BinLoader server is running, ready or busy.
+	   var req = new XMLHttpRequest(); 
+	   req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
+	   req.send();
+	   req.onerror = function(){
+		   alert("Cannot Load Payload Because The BinLoader Server Is Not Running");//<<If server is not running, alert message.
+		   return;
+	   };
+		req.onload = function(){
+			var responseJson = JSON.parse(req.responseText);
+			if (responseJson.status=="ready"){
+		    getPayload(PLfile, function (req) {
+            if ((req.status === 200 || req.status === 304) && req.response) {
+				   //Sending bins via IP POST Method
+                    let payloadData = new Uint8Array(req.response); //Method By Hippie68
+                   // Decompress
+                   if (PLfile.endsWith(".bz2"))
+                   {
+                   try {
+                    payloadData = bzip2.simple(bzip2.array(payloadData));
+                   } catch (error) {
+                   throw error;
+                   }
+                   }
+                   //Send Decompress Payload to GoldHEN Bin Server
+					sendPayload("http://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
+					   if (req.status === 200) {
+						pldone();
+					   }else{msgs.innerHTML = 'Cannot send payload';return;}
+					})
+				}
+			});
+			}
+			else {
+				alert("Cannot Load Payload Because The BinLoader Server Is Busy");//<<If server is busy, alert message.
+				return;
+			}
+		};
+	}
+
+//Payloads to be loaded over GoldHEN Bin Server method
+function LoadpayloadGoldHEN(PLfile)
+{ //Loading Payload via Payload Param.
+	   // First do an initial check to see if the BinLoader server is running, ready or busy.
+	   var req = new XMLHttpRequest(); 
+	   req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
+	   req.send();
+	   req.onerror = function(){
+		   alert("Cannot Load Payload Because The BinLoader Server Is Not Running");//<<If server is not running, alert message.
+		   return;
+	   };
+		req.onload = function(){
+			var responseJson = JSON.parse(req.responseText);
+			if (responseJson.status=="ready"){
+		    getPayload(PLfile, function (req) {
+				if ((req.status === 200 || req.status === 304) && req.response) {
+				   //Sending bins via IP POST Method
+					sendPayload("http://" + localStorage.ipaddress + ":9090", req.response, function (req) {
+					   if (req.status === 200) {
+						pldone();
+					   }else{msgs.innerHTML = 'Cannot send payload';return;}
+					})
+				}
+			});
+			}
+			else {
+				alert("Cannot Load Payload Because The BinLoader Server Is Busy");//<<If server is busy, alert message.
+				return;
+			}
+		};
+}
+
+function load_backupdb()
+{
+msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>Loading DB-Backup. Please wait!</h1>";
+LoadedMSG="DB-Backup Loaded";
+PLfile = "payloads/pl_Datenbank_Backup.bin";
+LoadpayloadGoldHEN(PLfile);
+}
+
+function load_restoredb()
+{
+msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>Loading DB-Restore. Please wait!</h1>";
+LoadedMSG="DB-Restore Loaded";
+PLfile = "payloads/pl_Datenbank_Restore.bin";
+LoadpayloadGoldHEN(PLfile);
+}
+
+function load_moduledumper()
+{
+msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>Loading Kernel Module-Dumper. Please wait!</h1>";
+LoadedMSG="Kernel Module-Dumper Loaded";
+PLfile = "payloads/pl_Moduledumper.bin";
+LoadpayloadGoldHEN(PLfile);
+}
+
+function load_kerneldumper()
+{
+msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>Loading Kernel-Dumper. Please wait!</h1>";
+LoadedMSG="Kernel-Dumper Loaded";
+PLfile = "payloads/pl_Kerneldumper.bin";
+LoadpayloadGoldHEN(PLfile);
+}
+
+function load_disableaslr()
+{
+msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>Loading Disable-ASLR. Please wait!</h1>";
+LoadedMSG="Disable-ASLR Loaded";
+PLfile = "pl_disableaslr.bin";
+LoadpayloadGoldHEN(PLfile);
+}
+
+function load_uart()
+{
+msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>Loading Permanent UART. Please wait!</h1>";
+LoadedMSG="Permanent UART Loaded";
+PLfile = "payloads/pl_Permanent_UART.bin";
+LoadpayloadGoldHEN(PLfile);
+}
+
+</script>
+
+</head>
+<body onload="checkbinserverstatus()">
+	<div id=msgs class=msgs>Playstation 4 FW 6.72 Exploit Menu</div>
+
+<div id=MenuContainer class=MenuContainer onclick=GetInfo()>
+<div id=bottommsg class="msgs bottopmsg">Credits: Prb123 - Leeful - marcan - Sleirsgoevy - Al Azif - eeply - rancido - fail0verfl0w - lestat - jannot9 - Triki1 And Many More</div>
+  <div style="width:100%;font-size:20px;color:white">
+  <div id="pldmenu" style=font-size:16px>
+   <br><br><br>
+
+<button>
+<div onclick="load_linux15()" onmouseover="GHover15();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux1.png"></div>
+<div onclick="openGHverSelection15()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux15()" onmouseover="GHover15()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW5.05 <font color="green"><span id=GHnum15></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux16()" onmouseover="GHover16();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux2.png"></div>
+<div onclick="openGHverSelection16()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux16()" onmouseover="GHover16()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW6.72 <font color="green"><span id=GHnum16></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux17()" onmouseover="GHover17();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux3.png"></div>
+<div onclick="openGHverSelection17()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux17()" onmouseover="GHover17()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW7.00 <font color="green"><span id=GHnum17></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux9()" onmouseover="GHover9();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux4.png"></div>
+<div onclick="openGHverSelection9()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux9()" onmouseover="GHover9()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW9.00 <font color="green"><span id=GHnum9></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux12()" onmouseover="GHover12();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux5.png"></div>
+<div onclick="openGHverSelection12()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux12()" onmouseover="GHover12()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW9.03 <font color="green"><span id=GHnum12></span></font></div>
+</button>
+   
+<button>
+<div onclick="load_linux6()" onmouseover="GHover6();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux6.png"></div>
+<div onclick="openGHverSelection6()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux6()" onmouseover="GHover6()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW9.60 <font color="green"><span id=GHnum6></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux7()" onmouseover="GHover7();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux7.png"></div>
+<div onclick="openGHverSelection7()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux7()" onmouseover="GHover7()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW10.0x <font color="green"><span id=GHnum7></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux10()" onmouseover="GHover10();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux8.png"></div>
+<div onclick="openGHverSelection10()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux10()" onmouseover="GHover10()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW10.50 <font color="green"><span id=GHnum10></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux8()" onmouseover="GHover8();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux9.png"></div>
+<div onclick="openGHverSelection8()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux8()" onmouseover="GHover8()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW11.00 <font color="green"><span id=GHnum8></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux14()" onmouseover="GHover14();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux10.png"></div>
+<div onclick="openGHverSelection14()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux14()" onmouseover="GHover14()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW11.02 <font color="green"><span id=GHnum14></span></font></div>
+</button>
+
+<button>
+<div onclick="load_linux13()" onmouseover="GHover13();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux11.png"></div>
+<div onclick="openGHverSelection13()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_linux13()" onmouseover="GHover13()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW12.00 <font color="green"><span id=GHnum13></span></font></div>
+</button>
+
+<button>
+<div onclick="load_fan11()" onmouseover="GHover11();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/fan.png"></div>
+<div onclick="openGHverSelection11()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
+<div onclick="load_fan11()" onmouseover="GHover11()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >CPU Temp <font color="green"><span id=GHnum11></span>°</font></div>
+</button>
+
+<button onclick="load_backupdb()" onmouseover="top.msgs.innerHTML='DB-Backup v1.0 - By Leeful / 11.00 Port By Al Azif'" onmouseout="top.defaultTXT()">
+	<div class=butIMG><img src="img/dbbackup.png"></div><div class=butTXT>DB-Backup</div></button>
+
+<button onclick="load_restoredb()" onmouseover="top.msgs.innerHTML='DB-Restore v1.0 - By Leeful / 11.00 Port Al Azif'" onmouseout="top.defaultTXT()">
+	<div class=butIMG><img src="img/dbrestore.png"></div><div class=butTXT>DB-Restore</div></button>
+
+<button onclick="load_kerneldumper()" onmouseover="top.msgs.innerHTML='Kernel-Dumper - v1.0 Original Version By Eversion / 11.00 Port By Al Azif'" onmouseout="top.defaultTXT()">
+	<div class=butIMG><img src="img/dumper.png"></div><div class=butTXT>Kernel Dumper</div></button>
+
+<button onclick="load_moduledumper()" onmouseover="top.msgs.innerHTML='Kernel-Module Dumper -  11.00 Port By Al Azif'" onmouseout="top.defaultTXT()">
+	<div class=butIMG><img src="img/dumper.png"></div><div class=butTXT>Module Dumper</div></button>
+
+<button onclick="load_disableaslr()" onmouseover="top.msgs.innerHTML='Disable ASLR - 11.00 Port By Al Azif'" onmouseout="top.defaultTXT()">
+	<div class=butIMG><img src="img/ps4debug.png"></div><div class=butTXT>Disable ASLR</div></button>
+
+<button onclick="load_uart()" onmouseover="top.msgs.innerHTML='Permanent UART - 11.00 Port By Al Azif'" onmouseout="top.defaultTXT()">
+	<div class=butIMG><img src="img/mira.png"></div><div class=butTXT>Permanent UART</div></button>
+
+</div>
+</div>
+
+<select class="multiOPTIONS" id="multiGH9" disabled="true" onChange="updateGHverSelection9()">
+<option value="1gb-b">PS4 Phat vram:1gb (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-b">PS4 Pro vram:1gb (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Belize(2))</option>
+<option value="2gb-b">PS4 Phat vram:2gb (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-b">PS4 Pro vram:2gb (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Belize(2))</option>
+<option value="3gb-b">PS4 Phat vram:3gb (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-b">PS4 Pro vram:3gb (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Belize(2))</option>
+<option value="4gb-b">PS4 Phat vram:4gb (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-b">PS4 Pro vram:4gb (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH6" disabled="true" onChange="updateGHverSelection6()">
+<option value="1gb-b">PS4 Phat vram:1gb (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-b">PS4 Pro vram:1gb (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Belize(2))</option>
+<option value="2gb-b">PS4 Phat vram:2gb (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-b">PS4 Pro vram:2gb (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Belize(2))</option>
+<option value="3gb-b">PS4 Phat vram:3gb (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-b">PS4 Pro vram:3gb (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Belize(2))</option>
+<option value="4gb-b">PS4 Phat vram:4gb (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-b">PS4 Pro vram:4gb (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH7" disabled="true" onChange="updateGHverSelection7()">
+<option value="1gb-b">PS4 Phat vram:1gb (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-b">PS4 Pro vram:1gb (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Belize(2))</option>
+<option value="2gb-b">PS4 Phat vram:2gb (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-b">PS4 Pro vram:2gb (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Belize(2))</option>
+<option value="3gb-b">PS4 Phat vram:3gb (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-b">PS4 Pro vram:3gb (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Belize(2))</option>
+<option value="4gb-b">PS4 Phat vram:4gb (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-b">PS4 Pro vram:4gb (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH8" disabled="true" onChange="updateGHverSelection8()">
+<option value="1gb-b">PS4 Phat vram:1gb (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-b">PS4 Pro vram:1gb (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Belize(2))</option>
+<option value="2gb-b">PS4 Phat vram:2gb (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-b">PS4 Pro vram:2gb (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Belize(2))</option>
+<option value="3gb-b">PS4 Phat vram:3gb (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-b">PS4 Pro vram:3gb (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Belize(2))</option>
+<option value="4gb-b">PS4 Phat vram:4gb (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-b">PS4 Pro vram:4gb (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH10" disabled="true" onChange="updateGHverSelection10()">
+<option value="1gb-b">PS4 Phat vram:1gb (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-b">PS4 Pro vram:1gb (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Belize(2))</option>
+<option value="2gb-b">PS4 Phat vram:2gb (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-b">PS4 Pro vram:2gb (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Belize(2))</option>
+<option value="3gb-b">PS4 Phat vram:3gb (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-b">PS4 Pro vram:3gb (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Belize(2))</option>
+<option value="4gb-b">PS4 Phat vram:4gb (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-b">PS4 Pro vram:4gb (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH11" disabled="true" onChange="updateGHverSelection11()">
+<option value="45">45° / 113°F ( let your PS4 fly..:) dustcleaner )</option>
+<option value="50">50° / 122°F</option>
+<option value="51">51° / 123°F</option>
+<option value="52">52° / 125°F</option>
+<option value="53">53° / 127°F</option>
+<option value="54">54° / 129°F</option>
+<option value="55">55° / 131°F</option>
+<option value="56">56° / 132°F</option>
+<option value="57">57° / 129°F</option>
+<option value="58">58° / 134°F</option>
+<option value="59">59° / 138°F</option>
+<option value="60">60° / 140°F</option>
+<option value="61">61° / 141°F</option>
+<option value="62">62° / 143°F</option>
+<option value="63">63° / 145°F</option>
+<option value="64">64° / 147°F</option>
+<option value="65">65° / 149°F</option>
+<option value="66">66° / 150°F</option>
+<option value="67">67° / 152°F</option>
+<option value="68">68° / 154°F</option>
+<option value="69">69° / 156°F</option>
+<option value="70">70° / 158°F</option>
+<option value="71">71° / 159°F</option>
+<option value="72">72° / 161°F</option>
+<option value="73">73° / 162°F</option>
+<option value="74">74° / 165°F</option>
+<option value="75">75° / 167°F</option>
+<option value="76">76° / 168°F</option>
+<option value="77">77° / 170°F</option>
+<option value="78">78° / 172°F</option>
+<option value="79">79° / 174°F (default)</option>
+<option value="80">80° / 176°F</option>
+<option value="81">81° / 177°F</option>
+<option value="82">82° / 179°F</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH12" disabled="true" onChange="updateGHverSelection12()">
+<option value="1gb-b">PS4 Phat vram:1gb (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-b">PS4 Pro vram:1gb (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Belize(2))</option>
+<option value="2gb-b">PS4 Phat vram:2gb (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-b">PS4 Pro vram:2gb (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Belize(2))</option>
+<option value="3gb-b">PS4 Phat vram:3gb (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-b">PS4 Pro vram:3gb (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Belize(2))</option>
+<option value="4gb-b">PS4 Phat vram:4gb (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-b">PS4 Pro vram:4gb (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH13" disabled="true" onChange="updateGHverSelection13()">
+<option value="1gb-baikal">PS4 Phat vram:1gbaikal (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-baikal">PS4 Pro vram:1gbaikal (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Aeolia & Belize(2))</option>
+<option value="2gb-baikal">PS4 Phat vram:2gbaikal (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-baikal">PS4 Pro vram:2gbaikal (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Aeolia & Belize(2))</option>
+<option value="3gb-baikal">PS4 Phat vram:3gbaikal (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-baikal">PS4 Pro vram:3gbaikal (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Aeolia & Belize(2))</option>
+<option value="4gb-baikal">PS4 Phat vram:4gbaikal (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-baikal">PS4 Pro vram:4gbaikal (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Aeolia & Belize(2))</option>
+</select>	
+
+<select class="multiOPTIONS" id="multiGH14" disabled="true" onChange="updateGHverSelection14()">
+<option value="1gb-baikal">PS4 Phat vram:1gbaikal (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-baikal">PS4 Pro vram:1gbaikal (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Aeolia & Belize(2))</option>
+<option value="2gb-baikal">PS4 Phat vram:2gbaikal (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-baikal">PS4 Pro vram:2gbaikal (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Aeolia & Belize(2))</option>
+<option value="3gb-baikal">PS4 Phat vram:3gbaikal (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-baikal">PS4 Pro vram:3gbaikal (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Aeolia & Belize(2))</option>
+<option value="4gb-baikal">PS4 Phat vram:4gbaikal (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-baikal">PS4 Pro vram:4gbaikal (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Aeolia & Belize(2))</option>
+</select>
+
+<select class="multiOPTIONS" id="multiGH15" disabled="true" onChange="updateGHverSelection15()">
+<option value="1gb-baikal">PS4 Phat vram:1gbaikal (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-baikal">PS4 Pro vram:1gbaikal (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Aeolia & Belize(2))</option>
+<option value="2gb-baikal">PS4 Phat vram:2gbaikal (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-baikal">PS4 Pro vram:2gbaikal (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Aeolia & Belize(2))</option>
+<option value="3gb-baikal">PS4 Phat vram:3gbaikal (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-baikal">PS4 Pro vram:3gbaikal (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Aeolia & Belize(2))</option>
+<option value="4gb-baikal">PS4 Phat vram:4gbaikal (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-baikal">PS4 Pro vram:4gbaikal (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Aeolia & Belize(2))</option>	
+</select>
+
+<select class="multiOPTIONS" id="multiGH16" disabled="true" onChange="updateGHverSelection16()">
+<option value="1gb-baikal">PS4 Phat vram:1gbaikal (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-baikal">PS4 Pro vram:1gbaikal (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Aeolia & Belize(2))</option>
+<option value="2gb-baikal">PS4 Phat vram:2gbaikal (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-baikal">PS4 Pro vram:2gbaikal (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Aeolia & Belize(2))</option>
+<option value="3gb-baikal">PS4 Phat vram:3gbaikal (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-baikal">PS4 Pro vram:3gbaikal (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Aeolia & Belize(2))</option>
+<option value="4gb-baikal">PS4 Phat vram:4gbaikal (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-baikal">PS4 Pro vram:4gbaikal (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Aeolia & Belize(2))</option>	
+</select>
+
+<select class="multiOPTIONS" id="multiGH17" disabled="true" onChange="updateGHverSelection17()">
+<option value="1gb-baikal">PS4 Phat vram:1gbaikal (Baikal)</option>
+<option value="1gb">PS4 Phat vram:1gb (Aeolia & Belize(2))</option>
+<option value="1gb-pro-baikal">PS4 Pro vram:1gbaikal (Baikal)</option>
+<option value="1gb-pro">PS4 Pro vram:1gb (Aeolia & Belize(2))</option>
+<option value="2gb-baikal">PS4 Phat vram:2gbaikal (Baikal)</option>
+<option value="2gb">PS4 Phat vram:2gb (Aeolia & Belize(2))</option>
+<option value="2gb-pro-baikal">PS4 Pro vram:2gbaikal (Baikal)</option>
+<option value="2gb-pro">PS4 Pro vram:2gb (Aeolia & Belize(2))</option>
+<option value="3gb-baikal">PS4 Phat vram:3gbaikal (Baikal)</option>
+<option value="3gb">PS4 Phat vram:3gb (Aeolia & Belize(2))</option>
+<option value="3gb-pro-baikal">PS4 Pro vram:3gbaikal (Baikal)</option>
+<option value="3gb-pro">PS4 Pro vram:3gb (Aeolia & Belize(2))</option>
+<option value="4gb-baikal">PS4 Phat vram:4gbaikal (Baikal)</option>
+<option value="4gb">PS4 Phat vram:4gb (Aeolia & Belize(2))</option>
+<option value="4gb-pro-baikal">PS4 Pro vram:4gbaikal (Baikal)</option>
+<option value="4gb-pro">PS4 Pro vram:4gb (Aeolia & Belize(2))</option>	
+</select>
+
+<script>
+function openGHverSelection15(){
+document.getElementById('multiGH15').disabled = false;
+multiGH15.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection16(){
+document.getElementById('multiGH16').disabled = false;
+multiGH16.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection17(){
+document.getElementById('multiGH17').disabled = false;
+multiGH17.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection9(){
+document.getElementById('multiGH9').disabled = false;
+multiGH9.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection12(){
+document.getElementById('multiGH12').disabled = false;
+multiGH12.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+	
+function openGHverSelection6(){
+document.getElementById('multiGH6').disabled = false;
+multiGH6.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection7(){
+document.getElementById('multiGH7').disabled = false;
+multiGH7.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection10(){
+document.getElementById('multiGH10').disabled = false;
+multiGH10.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection8(){
+document.getElementById('multiGH8').disabled = false;
+multiGH8.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection14(){
+document.getElementById('multiGH14').disabled = false;
+multiGH14.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection13(){
+document.getElementById('multiGH13').disabled = false;
+multiGH13.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function openGHverSelection11(){
+document.getElementById('multiGH11').disabled = false;
+multiGH11.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+}
+
+function updateGHverSelection15(){
+GHnum15.innerHTML=multiGH15.value;
+localStorage.GHVER15 = multiGH15.value;
+document.getElementById('multiGH15').disabled = true;
+}
+
+function updateGHverSelection16(){
+GHnum16.innerHTML=multiGH16.value;
+localStorage.GHVER16 = multiGH16.value;
+document.getElementById('multiGH16').disabled = true;
+}
+
+function updateGHverSelection17(){
+GHnum17.innerHTML=multiGH17.value;
+localStorage.GHVER17 = multiGH17.value;
+document.getElementById('multiGH17').disabled = true;
+}
+
+function updateGHverSelection9(){
+GHnum9.innerHTML=multiGH9.value;
+localStorage.GHVER9 = multiGH9.value;
+document.getElementById('multiGH9').disabled = true;
+}
+
+function updateGHverSelection12(){
+GHnum12.innerHTML=multiGH12.value;
+localStorage.GHVER12 = multiGH12.value;
+document.getElementById('multiGH12').disabled = true;
+}
+
+function updateGHverSelection6(){
+GHnum6.innerHTML=multiGH6.value;
+localStorage.GHVER6 = multiGH6.value;
+document.getElementById('multiGH6').disabled = true;
+}
+
+function updateGHverSelection7(){
+GHnum7.innerHTML=multiGH7.value;
+localStorage.GHVER7 = multiGH7.value;
+document.getElementById('multiGH7').disabled = true;
+}
+
+function updateGHverSelection10(){
+GHnum10.innerHTML=multiGH10.value;
+localStorage.GHVER10 = multiGH10.value;
+document.getElementById('multiGH10').disabled = true;
+}
+
+function updateGHverSelection8(){
+GHnum8.innerHTML=multiGH8.value;
+localStorage.GHVER8 = multiGH8.value;
+document.getElementById('multiGH8').disabled = true;
+}
+
+function updateGHverSelection14(){
+GHnum14.innerHTML=multiGH14.value;
+localStorage.GHVER14 = multiGH14.value;
+document.getElementById('multiGH14').disabled = true;
+}
+
+function updateGHverSelection13(){
+GHnum13.innerHTML=multiGH13.value;
+localStorage.GHVER13 = multiGH13.value;
+document.getElementById('multiGH13').disabled = true;
+}
+
+function updateGHverSelection11(){
+GHnum11.innerHTML=multiGH11.value;
+localStorage.GHVER11 = multiGH11.value;
+document.getElementById('multiGH11').disabled = true;
+}
+
+if (localStorage.GHVER15!=null){multiGH15.value = localStorage.GHVER15;}
+GHnum15.innerHTML=multiGH15.value;
+
+if (localStorage.GHVER16!=null){multiGH16.value = localStorage.GHVER16;}
+GHnum16.innerHTML=multiGH16.value;
+
+if (localStorage.GHVER17!=null){multiGH17.value = localStorage.GHVER17;}
+GHnum17.innerHTML=multiGH17.value;
+
+if (localStorage.GHVER9!=null){multiGH9.value = localStorage.GHVER9;}
+GHnum9.innerHTML=multiGH9.value;
+
+if (localStorage.GHVER12!=null){multiGH12.value = localStorage.GHVER12;}
+GHnum12.innerHTML=multiGH12.value;
+
+if (localStorage.GHVER6!=null){multiGH6.value = localStorage.GHVER6;}
+GHnum6.innerHTML=multiGH6.value;
+
+if (localStorage.GHVER7!=null){multiGH7.value = localStorage.GHVER7;}
+GHnum7.innerHTML=multiGH7.value;
+
+if (localStorage.GHVER10!=null){multiGH10.value = localStorage.GHVER10;}
+GHnum10.innerHTML=multiGH10.value;
+
+if (localStorage.GHVER8!=null){multiGH8.value = localStorage.GHVER8;}
+GHnum8.innerHTML=multiGH8.value;
+
+if (localStorage.GHVER14!=null){multiGH14.value = localStorage.GHVER14;}
+GHnum14.innerHTML=multiGH14.value;
+
+if (localStorage.GHVER13!=null){multiGH13.value = localStorage.GHVER13;}
+GHnum13.innerHTML=multiGH13.value;
+
+if (localStorage.GHVER11!=null){multiGH11.value = localStorage.GHVER11;}
+GHnum11.innerHTML=multiGH11.value;
+
+function GHover15(){top.msgs.innerHTML='Linux '+multiGH15.value+'';}
+function GHover16(){top.msgs.innerHTML='Linux '+multiGH16.value+'';}
+function GHover17(){top.msgs.innerHTML='Linux '+multiGH17.value+'';}
+function GHover9(){top.msgs.innerHTML='Linux '+multiGH9.value+'';}
+function GHover12(){top.msgs.innerHTML='Linux '+multiGH12.value+'';}
+function GHover6(){top.msgs.innerHTML='Linux '+multiGH6.value+'';}
+function GHover7(){top.msgs.innerHTML='Linux '+multiGH7.value+'';}
+function GHover10(){top.msgs.innerHTML='Linux '+multiGH10.value+'';}
+function GHover8(){top.msgs.innerHTML='Linux '+multiGH8.value+'';}
+function GHover14(){top.msgs.innerHTML='Linux '+multiGH14.value+'';}
+function GHover13(){top.msgs.innerHTML='Linux '+multiGH13.value+'';}
+function GHover11(){top.msgs.innerHTML='Fan '+multiGH11.value+'';}
+
+function load_linux15(){top.msgs.innerHTML="Loading Linux "+multiGH15.value;top.LoadedMSG="Linux "+multiGH15.value+" Loaded";top.PLfile="payloads/linux/fw505/payload-505-"+multiGH15.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux16(){top.msgs.innerHTML="Loading Linux "+multiGH16.value;top.LoadedMSG="Linux "+multiGH16.value+" Loaded";top.PLfile="payloads/linux/fw672/payload-672-"+multiGH16.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux17(){top.msgs.innerHTML="Loading Linux "+multiGH17.value;top.LoadedMSG="Linux "+multiGH17.value+" Loaded";top.PLfile="payloads/linux/fw700/payload-700-"+multiGH17.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux9(){top.msgs.innerHTML="Loading Linux "+multiGH9.value;top.LoadedMSG="Linux "+multiGH9.value+" Loaded";top.PLfile="payloads/linux/fw900/payload-900-"+multiGH9.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux12(){top.msgs.innerHTML="Loading Linux "+multiGH12.value;top.LoadedMSG="Linux "+multiGH12.value+" Loaded";top.PLfile="payloads/linux/fw903/payload-903-"+multiGH12.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux6(){top.msgs.innerHTML="Loading Linux "+multiGH6.value;top.LoadedMSG="Linux "+multiGH6.value+" Loaded";top.PLfile="payloads/linux/fw960/payload-960-"+multiGH6.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux7(){top.msgs.innerHTML="Loading Linux "+multiGH7.value;top.LoadedMSG="Linux "+multiGH7.value+" Loaded";top.PLfile="payloads/linux/fw1000/payload-1000-"+multiGH7.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux10(){top.msgs.innerHTML="Loading Linux "+multiGH10.value;top.LoadedMSG="Linux "+multiGH10.value+" Loaded";top.PLfile="payloads/linux/fw1050/payload-1050-"+multiGH10.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux8(){top.msgs.innerHTML="Loading Linux "+multiGH8.value;top.LoadedMSG="Linux "+multiGH8.value+" Loaded";top.PLfile="payloads/linux/fw1100/payload-1100-"+multiGH8.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux14(){top.msgs.innerHTML="Loading Linux "+multiGH14.value;top.LoadedMSG="Linux "+multiGH14.value+" Loaded";top.PLfile="payloads/linux/fw1102/payload-1102-"+multiGH14.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_linux13(){top.msgs.innerHTML="Loading Linux "+multiGH13.value;top.LoadedMSG="Linux "+multiGH13.value+" Loaded";top.PLfile="payloads/linux/fw1200/payload-1200-"+multiGH13.value+".bin";LoadpayloadGoldHEN(PLfile);}
+function load_fan11(){top.msgs.innerHTML="Loading Fantemp "+multiGH11.value;top.LoadedMSG="Linux "+multiGH11.value+" Loaded";top.PLfile="payloads/fan/"+multiGH11.value+".bin";LoadpayloadGoldHEN(PLfile);}
+
+
+//MODDED BY HIPPIE BZIP2.JS
+var bzip2 = {};
+
+bzip2.array = function(bytes) {
+var bit = 0, byte = 0;
+var BITMASK = [0, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF];
+return function(n) {
+  var result = 0;
+  while (n > 0) {
+    var left = 8 - bit;
+    if (n >= left) {
+      result <<= left;
+      result |= (BITMASK[left] & bytes[byte++]);
+      bit = 0;
+      n -= left;
+    } else {
+      result <<= n;
+      result |= ((bytes[byte] & (BITMASK[n] << (8 - n - bit))) >> (8 - n - bit));
+      bit += n;
+      n = 0;
+    }
+  }
+  return result;
+}
+};
+
+bzip2.simple = function(bits) {
+var size = bzip2.header(bits);
+var all = [], chunk = [];
+do {
+  all = all.concat(chunk);
+  chunk = bzip2.decompress(bits, size);
+} while (chunk != -1);
+return Uint8Array.from(all);
+};
+
+bzip2.header = function(bits) {
+if (bits(8 * 3) != 4348520) throw "No magic number found.";
+var i = bits(8) - 48;
+if (i < 1 || i > 9) throw "Not a bzip2 archive.";
+return i;
+};
+
+// Param1: a function for reading the block data (starting with 0x314159265359)
+// Param2: block size (0-9) (optional, defaults to 9)
+// Param3: length at which to stop decompressing and return the output
+bzip2.decompress = function(bits, size, len) {
+var MAX_HUFCODE_BITS = 20;
+var MAX_SYMBOLS = 258;
+var SYMBOL_RUNA = 0;
+var SYMBOL_RUNB = 1;
+var GROUP_SIZE = 50;
+
+var bufsize = 100000 * size;
+for (var h = "", i = 0; i < 6; i++) h += bits(8).toString(16);
+if (h == "177245385090") return -1; // Last block
+if (h != "314159265359") throw "Not valid bzip2 data.";
+bits(32); // Ignore CRC codes
+if (bits(1)) throw "Unsupported obsolete version.";
+var origPtr = bits(24);
+if(origPtr > bufsize) throw "Initial position larger than buffer size.";
+var t = bits(16);
+var symToByte = new Uint8Array(256),
+    symTotal = 0;
+for (i = 0; i < 16; i++) {
+  if (t & (1 << (15 - i))) {
+    var k = bits(16);
+    for (j = 0; j < 16; j++) {
+      if (k & (1 << (15 - j))) {
+        symToByte[symTotal++] = (16 * i) + j;
+      }
+    }
+  }
+}
+
+var groupCount = bits(3);
+if (groupCount < 2 || groupCount > 6) throw "Error 1 while decompressing.";
+var nSelectors = bits(15);
+if (nSelectors == 0) throw "Error 2 while decompressing.";
+var mtfSymbol = []; // TODO: possibly replace JS array with typed arrays
+for (var i = 0; i < groupCount; i++) mtfSymbol[i] = i;
+var selectors = new Uint8Array(32768);
+
+for (var i = 0; i < nSelectors; i++) {
+  for (var j = 0; bits(1); j++) if (j >= groupCount) throw "Error 3 while decompressing.";
+  var uc = mtfSymbol[j];
+  mtfSymbol.splice(j, 1); // This is a probably inefficient MTF transform
+  mtfSymbol.splice(0, 0, uc);
+  selectors[i] = uc;
+}
+
+var symCount = symTotal + 2;
+var groups = [];
+for (var j = 0; j < groupCount; j++) {
+  var length = new Uint8Array(MAX_SYMBOLS),
+      temp = new Uint8Array(MAX_HUFCODE_BITS + 1);
+  t = bits(5); // Lengths
+  for (var i = 0; i < symCount; i++) {
+    while (true) {
+      if (t < 1 || t > MAX_HUFCODE_BITS) throw "Error 4 while decompressing.";
+      if (!bits(1)) break;
+      if (!bits(1)) t++;
+      else t--;
+    }
+    length[i] = t;
+  }
+  var  minLen,  maxLen;
+  minLen = maxLen = length[0];
+  for (var i = 1; i < symCount; i++) {
+    if (length[i] > maxLen) maxLen = length[i];
+    else if (length[i] < minLen) minLen = length[i];
+  }
+  var hufGroup;
+  hufGroup = groups[j] = {};
+  hufGroup.permute = new Uint32Array(MAX_SYMBOLS);
+  hufGroup.limit = new Uint32Array(MAX_HUFCODE_BITS + 1);
+  hufGroup.base = new Uint32Array(MAX_HUFCODE_BITS + 1);
+  hufGroup.minLen = minLen;
+  hufGroup.maxLen = maxLen;
+  var base = hufGroup.base.subarray(1);
+  var limit = hufGroup.limit.subarray(1);
+  var pp = 0;
+  for (var i = minLen; i <= maxLen; i++)
+    for (var t = 0; t < symCount; t++)
+    if (length[t] == i) hufGroup.permute[pp++] = t;
+    for (i = minLen; i <= maxLen; i++) temp[i] = limit[i] = 0;
+    for (i = 0; i < symCount; i++) temp[length[i]]++;
+    pp = t = 0;
+    for (i = minLen; i < maxLen; i++) {
+      pp += temp[i];
+      limit[i] = pp - 1;
+      pp <<= 1;
+      base[i + 1] = pp - (t += temp[i]);
+    }
+    limit[maxLen] = pp + temp[maxLen] - 1;
+    base[minLen] = 0;
+}
+var byteCount = new Uint32Array(256);
+for (var i = 0; i < 256; i++) mtfSymbol[i] = i;
+var runPos, count, symCount, selector;
+runPos = count = symCount = selector = 0;
+var buf = new Uint32Array(bufsize);
+while (true) {
+  if (!(symCount--)) {
+    symCount = GROUP_SIZE - 1;
+    if (selector >= nSelectors) throw "Error 5 while decompressing.";
+    hufGroup = groups[selectors[selector++]];
+    base = hufGroup.base.subarray(1);
+    limit = hufGroup.limit.subarray(1);
+  }
+  i = hufGroup.minLen;
+  j = bits(i);
+  while (true) {
+    if (i > hufGroup.maxLen) throw "Error 6 while decompressing.";
+    if (j <= limit[i]) break;
+    i++;
+    j = (j << 1) | bits(1);
+  }
+  j -= base[i];
+  if (j < 0 || j >= MAX_SYMBOLS) throw "Error 7 while decompressing.";
+  var nextSym = hufGroup.permute[j];
+  if (nextSym == SYMBOL_RUNA || nextSym == SYMBOL_RUNB) {
+    if (!runPos) {
+      runPos = 1;
+      t = 0;
+    }
+    if (nextSym == SYMBOL_RUNA) t += runPos;
+    else t += 2 * runPos;
+    runPos <<= 1;
+    continue;
+  }
+  if (runPos) {
+    runPos = 0;
+    if (count + t >= bufsize) throw "Error 8 while decompressing.";
+    uc = symToByte[mtfSymbol[0]];
+    byteCount[uc] += t;
+    while (t--) buf[count++] = uc;
+  }
+  if (nextSym > symTotal) break;
+  if (count >= bufsize) throw "Error 9 while decompressing.";
+  i = nextSym -1;
+  uc = mtfSymbol[i];
+  mtfSymbol.splice(i, 1);
+  mtfSymbol.splice(0, 0, uc);
+  uc = symToByte[uc];
+  byteCount[uc]++;
+  buf[count++] = uc;
+}
+if (origPtr < 0 || origPtr >= count) throw "Error 10 while decompressing.";
+var j = 0;
+for (var i = 0; i < 256; i++) {
+  k = j + byteCount[i];
+  byteCount[i] = j;
+  j = k;
+}
+for (var i = 0; i < count; i++) {
+  uc = buf[i] & 0xff;
+  buf[byteCount[uc]] |= (i << 8);
+  byteCount[uc]++;
+}
+var pos = 0, current = 0, run = 0;
+if (count) {
+  pos = buf[origPtr];
+  current = (pos & 0xff);
+  pos >>= 8;
+  run = -1;
+}
+count = count;
+var output = [];
+var copies, previous, outbyte;
+if (!len) len = Infinity;
+while (count) {
+  count--;
+  previous = current;
+  pos = buf[pos];
+  current = pos & 0xff;
+  pos >>= 8;
+  if (run++ == 3) {
+    copies = current;
+    outbyte = previous;
+    current = -1;
+  } else {
+    copies = 1;
+    outbyte = current;
+  }
+  while (copies--) {
+    output.push(outbyte);
+    if (!--len) return output;
+  }
+  if (current != previous) run = 0;
+}
+return output;
+};
+
+</script>
+  
+</body>
+</html>

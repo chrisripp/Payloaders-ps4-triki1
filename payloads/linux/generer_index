@@ -1,0 +1,40 @@
+#!/bin/bash
+#commande list.txt : printf '%s\n' *.bin | sort | sed 's/^/payloads\\linux\\fw1102\\/' > liste_fichiers.txt
+
+input_file="liste_fichiers.txt"
+output_file="options.html"
+
+# Vider le fichier de sortie
+> "$output_file"
+
+while IFS= read -r ligne; do
+    # Extraire le nom du fichier (après le dernier \)
+    fichier=$(echo "$ligne" | sed 's/.*\\//')
+    
+    # Extraire la partie après "payload-900-" et avant ".bin"
+    value=$(echo "$fichier" | sed -n 's/.*payload-[0-9]*-\(.*\)\.bin/\1/p')
+    
+    # Déterminer le type de PS4 et la RAM
+    if [[ $value == *"-pro-b"* ]]; then
+        # PS4 Pro Baikal
+        ram=$(echo "$value" | sed 's/-pro-b//')
+        description="PS4 Pro vram:${ram} (Baikal)"
+    elif [[ $value == *"-pro"* ]]; then
+        # PS4 Pro
+        ram=$(echo "$value" | sed 's/-pro//')
+        description="PS4 Pro vram:${ram} (Aeolia & Belize(2))"
+    elif [[ $value == *"-b"* ]]; then
+        # PS4 Phat Baikal
+        ram=$(echo "$value" | sed 's/-b//')
+        description="PS4 Phat vram:${ram} (Baikal)"
+    else
+        # PS4 Phat standard
+        description="PS4 Phat vram:${value} (Aeolia & Belize(2))"
+    fi
+    
+    # Créer la ligne HTML
+    echo "<option value=\"${value}\">${description}</option>" >> "$output_file"
+    
+done < "$input_file"
+
+echo "Fichier HTML généré dans $output_file"
