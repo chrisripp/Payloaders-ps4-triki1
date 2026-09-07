@@ -61,11 +61,7 @@ function pldone()
 function checkbinserverstatus()
 {
     var req = new XMLHttpRequest(); 
-<<<<<<< HEAD
-	req.open("POST", "https://"+localStorage.ipaddress+":9090/status");
-=======
 	req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 	req.send();
 	req.onerror = function(){
 		msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>GoldHEN Bin Server Not Detected!!!</h1>";
@@ -108,11 +104,7 @@ function LoadpayloadGoldHENBz2(PLfile)
                    }
                    }
                    //Send Decompress Payload to GoldHEN Bin Server
-<<<<<<< HEAD
-					sendPayload("https://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
-=======
 					sendPayload("http://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 					   if (req.status === 200) {
 						pldone();
 					   }else{msgs.innerHTML = 'Cannot send payload';return;}
@@ -132,11 +124,7 @@ function LoadpayloadGoldHEN(PLfile)
 { //Loading Payload via Payload Param.
 	   // First do an initial check to see if the BinLoader server is running, ready or busy.
 	   var req = new XMLHttpRequest(); 
-<<<<<<< HEAD
-	   req.open("POST", "https://"+localStorage.ipaddress+":9090/status");
-=======
 	   req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 	   req.send();
 	   req.onerror = function(){
 		   alert("Cannot Load Payload Because The BinLoader Server Is Not Running");//<<If server is not running, alert message.
@@ -148,11 +136,7 @@ function LoadpayloadGoldHEN(PLfile)
 		    getPayload(PLfile, function (req) {
 				if ((req.status === 200 || req.status === 304) && req.response) {
 				   //Sending bins via IP POST Method
-<<<<<<< HEAD
-					sendPayload("https://" + localStorage.ipaddress + ":9090", req.response, function (req) {
-=======
 					sendPayload("http://" + localStorage.ipaddress + ":9090", req.response, function (req) {
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 					   if (req.status === 200) {
 						pldone();
 					   }else{msgs.innerHTML = 'Cannot send payload';return;}
@@ -228,67 +212,67 @@ LoadpayloadGoldHEN(PLfile);
    <br><br><br>
 
 <button>
-<div onclick="load_linux15()" onmouseover="GHover15();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux1.png"></div>
+<div onclick="load_linux15()" onmouseover="GHover15();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection15()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux15()" onmouseover="GHover15()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW5.05 <font color="green"><span id=GHnum15></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux16()" onmouseover="GHover16();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux2.png"></div>
+<div onclick="load_linux16()" onmouseover="GHover16();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection16()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux16()" onmouseover="GHover16()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW6.72 <font color="green"><span id=GHnum16></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux17()" onmouseover="GHover17();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux3.png"></div>
+<div onclick="load_linux17()" onmouseover="GHover17();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection17()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux17()" onmouseover="GHover17()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW7.00 <font color="green"><span id=GHnum17></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux9()" onmouseover="GHover9();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux4.png"></div>
+<div onclick="load_linux9()" onmouseover="GHover9();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection9()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux9()" onmouseover="GHover9()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW9.00 <font color="green"><span id=GHnum9></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux12()" onmouseover="GHover12();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux5.png"></div>
+<div onclick="load_linux12()" onmouseover="GHover12();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection12()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux12()" onmouseover="GHover12()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW9.03 <font color="green"><span id=GHnum12></span></font></div>
 </button>
    
 <button>
-<div onclick="load_linux6()" onmouseover="GHover6();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux6.png"></div>
+<div onclick="load_linux6()" onmouseover="GHover6();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection6()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux6()" onmouseover="GHover6()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW9.60 <font color="green"><span id=GHnum6></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux7()" onmouseover="GHover7();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux7.png"></div>
+<div onclick="load_linux7()" onmouseover="GHover7();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection7()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux7()" onmouseover="GHover7()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW10.0x <font color="green"><span id=GHnum7></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux10()" onmouseover="GHover10();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux8.png"></div>
+<div onclick="load_linux10()" onmouseover="GHover10();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection10()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux10()" onmouseover="GHover10()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW10.50 <font color="green"><span id=GHnum10></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux8()" onmouseover="GHover8();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux9.png"></div>
+<div onclick="load_linux8()" onmouseover="GHover8();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection8()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux8()" onmouseover="GHover8()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW11.00 <font color="green"><span id=GHnum8></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux14()" onmouseover="GHover14();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux10.png"></div>
+<div onclick="load_linux14()" onmouseover="GHover14();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection14()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux14()" onmouseover="GHover14()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW11.02 <font color="green"><span id=GHnum14></span></font></div>
 </button>
 
 <button>
-<div onclick="load_linux13()" onmouseover="GHover13();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux11.png"></div>
+<div onclick="load_linux13()" onmouseover="GHover13();" onmouseout="top.defaultTXT()" class=butIMG><img src="img/linux.png"></div>
 <div onclick="openGHverSelection13()" class=multiBUTTON tabindex=1 onmouseover="top.msgs.innerHTML='Select A Linux Version To Use';" onmouseout="top.defaultTXT()">▼</div>
 <div onclick="load_linux13()" onmouseover="GHover13()" onmouseout="top.defaultTXT()" class=multiTXT tabindex=0 >FW12.00 <font color="green"><span id=GHnum13></span></font></div>
 </button>
