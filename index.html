@@ -61,11 +61,7 @@ function pldone()
 function checkbinserverstatus()
 {
     var req = new XMLHttpRequest(); 
-<<<<<<< HEAD
-	req.open("POST", "https://"+localStorage.ipaddress+":9090/status");
-=======
 	req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 	req.send();
 	req.onerror = function(){
 		msgs.innerHTML="<h1 style='font-size:25px;text-align:center;'>GoldHEN Bin Server Not Detected!!!</h1>";
@@ -108,11 +104,7 @@ function LoadpayloadGoldHENBz2(PLfile)
                    }
                    }
                    //Send Decompress Payload to GoldHEN Bin Server
-<<<<<<< HEAD
 					sendPayload("https://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
-=======
-					sendPayload("http://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 					   if (req.status === 200) {
 						pldone();
 					   }else{msgs.innerHTML = 'Cannot send payload';return;}
@@ -132,11 +124,7 @@ function LoadpayloadGoldHEN(PLfile)
 { //Loading Payload via Payload Param.
 	   // First do an initial check to see if the BinLoader server is running, ready or busy.
 	   var req = new XMLHttpRequest(); 
-<<<<<<< HEAD
 	   req.open("POST", "https://"+localStorage.ipaddress+":9090/status");
-=======
-	   req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 	   req.send();
 	   req.onerror = function(){
 		   alert("Cannot Load Payload Because The BinLoader Server Is Not Running");//<<If server is not running, alert message.
@@ -148,11 +136,7 @@ function LoadpayloadGoldHEN(PLfile)
 		    getPayload(PLfile, function (req) {
 				if ((req.status === 200 || req.status === 304) && req.response) {
 				   //Sending bins via IP POST Method
-<<<<<<< HEAD
 					sendPayload("https://" + localStorage.ipaddress + ":9090", req.response, function (req) {
-=======
-					sendPayload("http://" + localStorage.ipaddress + ":9090", req.response, function (req) {
->>>>>>> c1afa6abd34ff595f3fee2d9af0ad1b80e581b76
 					   if (req.status === 200) {
 						pldone();
 					   }else{msgs.innerHTML = 'Cannot send payload';return;}
