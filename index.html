@@ -104,7 +104,7 @@ function LoadpayloadGoldHENBz2(PLfile)
                    }
                    }
                    //Send Decompress Payload to GoldHEN Bin Server
-					sendPayload("https://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
+					sendPayload("http://" + localStorage.ipaddress + ":9090", payloadData.buffer, function (req) {
 					   if (req.status === 200) {
 						pldone();
 					   }else{msgs.innerHTML = 'Cannot send payload';return;}
@@ -124,7 +124,7 @@ function LoadpayloadGoldHEN(PLfile)
 { //Loading Payload via Payload Param.
 	   // First do an initial check to see if the BinLoader server is running, ready or busy.
 	   var req = new XMLHttpRequest(); 
-	   req.open("POST", "https://"+localStorage.ipaddress+":9090/status");
+	   req.open("POST", "http://"+localStorage.ipaddress+":9090/status");
 	   req.send();
 	   req.onerror = function(){
 		   alert("Cannot Load Payload Because The BinLoader Server Is Not Running");//<<If server is not running, alert message.
@@ -136,7 +136,7 @@ function LoadpayloadGoldHEN(PLfile)
 		    getPayload(PLfile, function (req) {
 				if ((req.status === 200 || req.status === 304) && req.response) {
 				   //Sending bins via IP POST Method
-					sendPayload("https://" + localStorage.ipaddress + ":9090", req.response, function (req) {
+					sendPayload("http://" + localStorage.ipaddress + ":9090", req.response, function (req) {
 					   if (req.status === 200) {
 						pldone();
 					   }else{msgs.innerHTML = 'Cannot send payload';return;}
